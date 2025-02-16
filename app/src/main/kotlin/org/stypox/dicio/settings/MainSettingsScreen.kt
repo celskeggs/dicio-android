@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHost
+import androidx.navigation.NavHostController
 import org.stypox.dicio.R
 import org.stypox.dicio.settings.datastore.InputDevice
 import org.stypox.dicio.settings.datastore.Language
@@ -41,13 +44,15 @@ import org.stypox.dicio.settings.datastore.UserSettingsModule.Companion.newDataS
 import org.stypox.dicio.settings.datastore.WakeDevice
 import org.stypox.dicio.settings.ui.SettingsCategoryTitle
 import org.stypox.dicio.settings.ui.SettingsItem
+import org.stypox.dicio.ui.nav.ChecklistSettings
+import org.stypox.dicio.ui.nav.SkillSettings
 import org.stypox.dicio.ui.theme.AppTheme
 
 
 @Composable
 fun MainSettingsScreen(
     navigationIcon: @Composable () -> Unit,
-    navigateToSkillSettings: () -> Unit,
+    navigationController: NavHostController?,
     viewModel: MainSettingsViewModel = hiltViewModel(),
 ) {
     Scaffold(
@@ -60,7 +65,7 @@ fun MainSettingsScreen(
         }
     ) {
         MainSettingsScreen(
-            navigateToSkillSettings = navigateToSkillSettings,
+            navigationController = navigationController,
             viewModel = viewModel,
             modifier = Modifier.padding(it),
         )
@@ -69,7 +74,7 @@ fun MainSettingsScreen(
 
 @Composable
 private fun MainSettingsScreen(
-    navigateToSkillSettings: () -> Unit,
+    navigationController: NavHostController?,
     viewModel: MainSettingsViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -114,8 +119,17 @@ private fun MainSettingsScreen(
                 icon = Icons.Default.Extension,
                 description = stringResource(R.string.pref_skills_summary),
                 modifier = Modifier
-                    .clickable(onClick = navigateToSkillSettings)
+                    .clickable(onClick = { navigationController?.navigate(SkillSettings) })
                     .testTag("skill_settings_item")
+            )
+        }
+        item {
+            SettingsItem(
+                title = "Checklists",
+                icon = Icons.Default.Checklist,
+                description = "Create, edit, and delete voice checklists",
+                modifier = Modifier
+                    .clickable(onClick = { navigationController?.navigate(ChecklistSettings) })
             )
         }
 
@@ -208,7 +222,7 @@ private fun MainSettingsScreenPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             MainSettingsScreen(
-                navigateToSkillSettings = {},
+                navigationController = null,
                 viewModel = MainSettingsViewModel(
                     application = Application(),
                     wakeDeviceWrapper = null,
@@ -235,7 +249,7 @@ private fun MainSettingsScreenWithTopBarPreview() {
                         )
                     }
                 },
-                navigateToSkillSettings = {},
+                navigationController = null,
                 viewModel = MainSettingsViewModel(
                     application = Application(),
                     wakeDeviceWrapper = null,

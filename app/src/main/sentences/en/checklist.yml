@@ -1,0 +1,2 @@
+start:
+ - (let s|us)? start|resume|begin|continue (a|the)? (last|.list.)? checklist (for? .list.)?

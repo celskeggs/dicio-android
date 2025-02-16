@@ -14,5 +14,7 @@ enum class UserAction(val message: String) : Parcelable {
     GENERIC_EVALUATION("Evaluation"),
     SKILL_EVALUATION("Skill evaluation"),
     WAKE_DOWNLOADING("Downloading wake word model"),
-    WAKE_LOADING("Loading wake word model");
+    WAKE_LOADING("Loading wake word model"),
+    IMPORTING_CHECKLIST("Importing checklist"),
+    EXPORTING_CHECKLIST("Exporting checklist");
 }

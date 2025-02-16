@@ -1,0 +1,29 @@
+complete:
+  - check
+  - checkmark
+
+skip:
+  - skip (it|this one)?
+  - come back (to this one?)?
+  - next step
+
+wait:
+  - wait
+  - hold on
+  - "no"
+  - not yet
+
+abort:
+  - abort|exit|stop the? checklist
+
+query:
+  - what (s|is) next
+  - say again
+  - remind me
+  - where (was i)|(were we)
+  - what (am|was i)|(are|were we) doing
+  - please repeat (that again?)?
+
+reset:
+  - restart|start|(begin again) (at the beginning)|(from the top)
+  - reset|restart the? checklist

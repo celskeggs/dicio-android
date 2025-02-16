@@ -106,3 +106,21 @@ skills:
         captures:
           - id: where
             type: string
+
+  - id: checklist
+    specificity: medium
+    sentences:
+      - id: start
+        captures:
+          - id: list
+            type: string
+
+  - id: checklist_ok
+    specificity: high
+    sentences:
+      - id: complete
+      - id: skip
+      - id: wait
+      - id: abort
+      - id: query
+      - id: reset

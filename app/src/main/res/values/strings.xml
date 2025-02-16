@@ -214,4 +214,6 @@
     <string name="skill_listening_stop_listening">Okay</string>
     <string name="skill_name_listening">Control listening</string>
     <string name="skill_sentence_example_listening">Stop listening</string>
+    <string name="skill_name_checklist">Checklist</string>
+    <string name="skill_sentence_example_checklist">Start the checklist</string>
 </resources>
