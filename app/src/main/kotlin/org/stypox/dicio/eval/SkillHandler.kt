@@ -18,6 +18,7 @@ import org.stypox.dicio.di.SkillContextInternal
 import org.stypox.dicio.settings.datastore.UserSettings
 import org.stypox.dicio.settings.datastore.UserSettingsModule
 import org.stypox.dicio.skills.calculator.CalculatorInfo
+import org.stypox.dicio.skills.checklist.ChecklistInfo
 import org.stypox.dicio.skills.current_time.CurrentTimeInfo
 import org.stypox.dicio.skills.fallback.text.TextFallbackInfo
 import org.stypox.dicio.skills.listening.ListeningInfo
@@ -55,6 +56,7 @@ class SkillHandler @Inject constructor(
         JokeInfo,
         ListeningInfo(dataStore),
         TranslationInfo,
+        ChecklistInfo,
     )
 
     // TODO add more fallback skills (e.g. search)

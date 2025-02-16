@@ -97,12 +97,8 @@ protobuf {
         generateProtoTasks {
             all().forEach {
                 it.builtins {
-                    create("kotlin") {
-                        option("lite")
-                    }
-                    create("java") {
-                        option("lite")
-                    }
+                    create("kotlin")
+                    create("java")
                 }
             }
         }
@@ -163,8 +159,9 @@ dependencies {
     testAnnotationProcessor(libs.hilt.android.compiler)
 
     // Protobuf and Datastore
-    implementation(libs.protobuf.kotlin.lite)
-    implementation(libs.protobuf.java.lite)
+    implementation(libs.protobuf.kotlin)
+    implementation(libs.protobuf.java)
+    implementation(libs.protobuf.java.util)
     implementation(libs.datastore)
 
     // Navigation
