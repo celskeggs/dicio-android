@@ -18,12 +18,15 @@ abort:
 
 query:
   - what (s|is) next
+  - what step (am I)|(were we) on
   - say again
   - remind me
+  - resume
   - where (was i)|(were we)
   - what (am|was i)|(are|were we) doing
   - please repeat (that again?)?
 
 reset:
+  - let s take this from the top
   - restart|start|(begin again) (at the beginning)|(from the top)
   - reset|restart the? checklist

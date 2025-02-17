@@ -15,12 +15,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.IndeterminateCheckBox
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -161,6 +164,8 @@ fun ChecklistSettingsItem(
     toggleExpanded: () -> Unit,
 ) {
     var deleteDialogOpen by rememberSaveable { mutableStateOf(false) }
+    var dialogOpenIndex: Int? by rememberSaveable { mutableStateOf(null) }
+    var attemptingItemDelete by rememberSaveable { mutableStateOf(false) }
     // FIXME: Include locale
     val formatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM)
 
@@ -223,17 +228,19 @@ fun ChecklistSettingsItem(
             }
 
             checklist.checklistItemList.forEachIndexed { index, item ->
-                var dialogOpen by rememberSaveable { mutableStateOf(false) }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .clickable { dialogOpen = true }
+                        .clickable {
+                            dialogOpenIndex = index
+                            attemptingItemDelete = false
+                        }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     Icon(
                         imageVector = when (item.executionState) {
                             ItemState.NOT_ASKED -> Icons.Default.CheckBoxOutlineBlank
-                            ItemState.ASKED -> Icons.Default.IndeterminateCheckBox
+                            ItemState.ASKED -> Icons.Default.RecordVoiceOver
                             ItemState.COMPLETED -> Icons.Default.CheckBox
                             ItemState.SKIPPED -> Icons.Default.Pause
                             else -> Icons.Default.QuestionMark
@@ -253,22 +260,112 @@ fun ChecklistSettingsItem(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-                if (dialogOpen) {
-                    var value by rememberSaveable { mutableStateOf(item.itemName) }
+            }
 
-                    Dialog(onDismissRequest = { dialogOpen = false }) {
+            if (dialogOpenIndex != null && dialogOpenIndex!! < checklist.checklistItemCount) {
+                var value by rememberSaveable { mutableStateOf(checklist.checklistItemList[dialogOpenIndex!!].itemName) }
+
+                if (attemptingItemDelete) {
+                    AlertDialog(
+                        icon = {
+                            Icon(Icons.Default.Warning, contentDescription = "Warning")
+                        },
+                        title = {
+                            Text(text = "Item ${dialogOpenIndex!! + 1}. ${value.ifBlank { "No Description" }}")
+                        },
+                        text = {
+                            Text(text = "Are you sure you want to delete this checklist item?")
+                        },
+                        onDismissRequest = {
+                            attemptingItemDelete = false
+                            dialogOpenIndex = null
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    updateChecklist(
+                                        checklist.toBuilder().clearChecklistItem()
+                                        .addAllChecklistItem(checklist.checklistItemList.filterIndexed { index, _ -> index != dialogOpenIndex!! }).build()
+                                    )
+                                    attemptingItemDelete = false
+                                    dialogOpenIndex = null
+                                }
+                            ) {
+                                Text("Delete")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    attemptingItemDelete = false
+                                    dialogOpenIndex = null
+                                }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                } else {
+                    Dialog(onDismissRequest = { dialogOpenIndex = null }) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = MaterialTheme.shapes.extraLarge,
                         ) {
-                            Text(
-                                text = "Description for item ${index + 1}",
-                                style = MaterialTheme.typography.titleLarge,
-                                textAlign = TextAlign.Center,
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
-                            )
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        if (dialogOpenIndex!! < checklist.checklistItemCount - 1) {
+                                            updateChecklist(checklist.copy {
+                                                val current = checklistItem[dialogOpenIndex!!]
+                                                checklistItem[dialogOpenIndex!!] =
+                                                    checklistItem[dialogOpenIndex!! + 1]
+                                                checklistItem[dialogOpenIndex!! + 1] = current
+                                            })
+                                            dialogOpenIndex = dialogOpenIndex!! + 1
+                                        }
+                                    },
+                                    enabled = (dialogOpenIndex!! < checklist.checklistItemCount - 1)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDownward,
+                                        contentDescription = "Move Down",
+                                        modifier = Modifier.size(32.dp),
+                                    )
+                                }
+                                Text(
+                                    text = "Item ${dialogOpenIndex!! + 1}",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .weight(1.0f)
+                                        .padding(
+                                            start = 16.dp,
+                                            top = 16.dp,
+                                            end = 16.dp,
+                                            bottom = 8.dp
+                                        ),
+                                )
+                                IconButton(onClick = {
+                                    if (dialogOpenIndex!! > 0) {
+                                        updateChecklist(checklist.copy {
+                                            val current = checklistItem[dialogOpenIndex!!]
+                                            checklistItem[dialogOpenIndex!!] =
+                                                checklistItem[dialogOpenIndex!! - 1]
+                                            checklistItem[dialogOpenIndex!! - 1] = current
+                                        })
+                                        dialogOpenIndex = dialogOpenIndex!! - 1
+                                    }
+                                }, enabled = (dialogOpenIndex!! > 0)) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowUpward,
+                                        contentDescription = "Move Up",
+                                        modifier = Modifier.size(32.dp),
+                                    )
+                                }
+                            }
 
                             Box(
                                 contentAlignment = Alignment.TopCenter,
@@ -294,19 +391,22 @@ fun ChecklistSettingsItem(
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp, vertical = 8.dp)
                             ) {
-                                TextButton(onClick = { dialogOpen = false }) {
-                                    Text(stringResource(android.R.string.cancel))
+                                TextButton(onClick = { attemptingItemDelete = true }) {
+                                    Text("Delete")
                                 }
                                 Spacer(modifier = Modifier.weight(1.0f))
+                                TextButton(onClick = { dialogOpenIndex = null }) {
+                                    Text(stringResource(android.R.string.cancel))
+                                }
                                 TextButton(
                                     onClick = {
                                         // only send value changes when the user presses ok
                                         updateChecklist(checklist.copy {
-                                            checklistItem[index] = checklistItem[index].copy {
+                                            checklistItem[dialogOpenIndex!!] = checklistItem[dialogOpenIndex!!].copy {
                                                 itemName = value
                                             }
                                         })
-                                        dialogOpen = false
+                                        dialogOpenIndex = null
                                     }
                                 ) {
                                     Text(stringResource(android.R.string.ok))
@@ -321,6 +421,8 @@ fun ChecklistSettingsItem(
                 onClick = {
                     updateChecklist(checklist.copy {
                         checklistItem.add(ChecklistItem.getDefaultInstance())
+                        dialogOpenIndex = checklistItem.size - 1
+                        attemptingItemDelete = false
                     })
                 },
                 modifier = Modifier
