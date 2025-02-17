@@ -47,7 +47,7 @@ interface SttInputDeviceWrapper {
 
 class SttInputDeviceWrapperImpl(
     @ApplicationContext private val appContext: Context,
-    dataStore: DataStore<UserSettings>,
+    private val dataStore: DataStore<UserSettings>,
     private val localeManager: LocaleManager,
     private val okHttpClient: OkHttpClient,
 ) : SttInputDeviceWrapper {
@@ -100,7 +100,7 @@ class SttInputDeviceWrapperImpl(
             UNRECOGNIZED,
             INPUT_DEVICE_UNSET,
             INPUT_DEVICE_VOSK -> VoskInputDevice(
-                appContext, okHttpClient, localeManager
+                appContext, okHttpClient, localeManager, dataStore
             )
             INPUT_DEVICE_NOTHING -> null
         }

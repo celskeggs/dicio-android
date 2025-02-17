@@ -30,6 +30,7 @@ import org.stypox.dicio.settings.datastore.SttPlaySound
 import org.stypox.dicio.settings.datastore.Theme
 import org.stypox.dicio.settings.datastore.WakeDevice
 import org.stypox.dicio.settings.ui.BooleanSetting
+import org.stypox.dicio.settings.ui.IntSetting
 import org.stypox.dicio.settings.ui.ListSetting
 
 
@@ -159,6 +160,15 @@ fun speechOutputDevice() = ListSetting(
             name = stringResource(R.string.pref_speech_output_method_nothing),
         ),
     ),
+)
+
+@Composable
+fun sttSilenceDuration() = IntSetting(
+    title = "Duration of silence",
+    icon = Icons.AutoMirrored.Filled.Send,
+    description = { "Wait $it times for speech before giving up" },
+    minimum = 1,
+    maximum = 5,
 )
 
 @Composable

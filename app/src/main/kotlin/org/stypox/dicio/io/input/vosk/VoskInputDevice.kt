@@ -22,6 +22,7 @@ package org.stypox.dicio.io.input.vosk
 import android.content.Context
 import android.util.Log
 import androidx.core.os.LocaleListCompat
+import androidx.datastore.core.DataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.stypox.dicio.di.LocaleManager
@@ -49,6 +53,7 @@ import org.stypox.dicio.io.input.vosk.VoskState.NotDownloaded
 import org.stypox.dicio.io.input.vosk.VoskState.NotInitialized
 import org.stypox.dicio.io.input.vosk.VoskState.NotLoaded
 import org.stypox.dicio.io.input.vosk.VoskState.Unzipping
+import org.stypox.dicio.settings.datastore.UserSettings
 import org.stypox.dicio.ui.util.Progress
 import org.stypox.dicio.util.FileToDownload
 import org.stypox.dicio.util.LocaleUtils
@@ -69,6 +74,7 @@ class VoskInputDevice(
     @ApplicationContext appContext: Context,
     private val okHttpClient: OkHttpClient,
     localeManager: LocaleManager,
+    dataStore: DataStore<UserSettings>,
 ) : SttInputDevice {
 
     private val _state: MutableStateFlow<VoskState>
@@ -85,6 +91,7 @@ class VoskInputDevice(
     private val modelDirectory: File get() = File(filesDir, "vosk-model")
     private val modelExistFileCheck: File get() = File(modelDirectory, "ivector")
 
+    private var sttSilenceDuration: Int = 0
 
     init {
         // Run blocking, because the locale is always available right away since LocaleManager also
@@ -105,6 +112,14 @@ class VoskInputDevice(
         scope.launch {
             // perform initialization again every time the locale changes
             nextLocaleFlow.collect { reinit(it) }
+        }
+
+        // No need to block here since the default value is a fine fallback.
+        // FIXME: Does this leak a reference?
+        scope.launch {
+            dataStore.data.collect {
+                sttSilenceDuration = it.sttSilenceDuration
+            }
         }
     }
 
@@ -429,7 +444,7 @@ class VoskInputDevice(
         eventListener: (InputEvent) -> Unit,
     ) {
         _state.value = Listening(speechService, eventListener)
-        speechService.startListening(VoskListener(this, eventListener, speechService))
+        speechService.startListening(VoskListener(this, eventListener, sttSilenceDuration, speechService))
     }
 
     /**
