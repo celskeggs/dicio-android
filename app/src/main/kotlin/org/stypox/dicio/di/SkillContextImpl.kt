@@ -3,12 +3,19 @@ package org.stypox.dicio.di
 import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.dicio.numbers.ParserFormatter
 import org.dicio.skill.context.NoSettingsAccess
 import org.dicio.skill.context.SettingsAccess
 import org.dicio.skill.context.SkillContext
 import org.dicio.skill.context.SpeechOutputDevice
+import org.dicio.skill.skill.InteractionLog
+import org.dicio.skill.skill.Permission
+import org.stypox.dicio.eval.SkillEvaluator
+import org.stypox.dicio.io.input.InputEvent
 import org.stypox.dicio.io.speech.NothingSpeechDevice
 import java.util.Locale
 import javax.inject.Inject
@@ -22,6 +29,7 @@ class SkillContextImpl private constructor(
     // NothingSpeechDevice
     override val speechOutputDevice: SpeechOutputDevice,
     override val settingsAccess: SettingsAccess,
+    private val skillEvaluator: Lazy<SkillEvaluator>
 ) : SkillContext {
 
     @Inject
@@ -30,7 +38,8 @@ class SkillContextImpl private constructor(
         localeManager: LocaleManager,
         speechOutputDevice: SpeechOutputDeviceWrapper,
         settingsAccess: SettingsAccessWrapper,
-    ) : this(android, localeManager, speechOutputDevice as SpeechOutputDevice, settingsAccess as SettingsAccess)
+        skillEvaluator: Lazy<SkillEvaluator>,
+    ) : this(android, localeManager, speechOutputDevice as SpeechOutputDevice, settingsAccess as SettingsAccess, { skillEvaluator.get() })
 
 
     override val locale: Locale
@@ -56,6 +65,9 @@ class SkillContextImpl private constructor(
             return lastParserFormatter?.first
         }
 
+    override val interactionLog: InteractionLog
+        get() = skillEvaluator.get().state.value
+
     companion object {
         fun newForPreviews(context: Context): SkillContextImpl {
             val localeManager = LocaleManager.newForPreviews(context)
@@ -64,6 +76,16 @@ class SkillContextImpl private constructor(
                 localeManager,
                 NothingSpeechDevice(),
                 NoSettingsAccess(),
+                { object : SkillEvaluator {
+                    override val state: StateFlow<InteractionLog>
+                        get() = MutableStateFlow(InteractionLog(listOf(), null))
+
+                    override var permissionRequester: suspend (List<Permission>) -> Boolean
+                        get() = { false }
+                        set(_) {}
+
+                    override fun processInputEvent(event: InputEvent) {}
+                } }
             )
             @SuppressLint("StateFlowValueCalledInComposition")
             res.lastParserFormatter = Pair(
